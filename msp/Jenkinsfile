@@ -78,27 +78,27 @@ pipeline {
         }
 
         stage('Deploy with Docker Compose') {
-            steps {
-                script {
-                    echo '🚀 Levantando microservicios con Docker Compose...'
+    steps {
+        script {
+            echo '🚀 Levantando microservicios con Docker Compose...'
 
-                    try {
-                        sh "docker-compose -p ${env.DOCKER_PROJECT_NAME} down -v --remove-orphans"
-                    } catch (Exception e) {
-                        echo "⚠️ No había contenedores corriendo"
-                    }
-
-                    sh "docker-compose -p ${env.DOCKER_PROJECT_NAME} up -d --build"
-
-                    echo '⏳ Esperando 30 segundos para levantar contenedores...'
-                    sleep(30)
-
-                    sh "docker ps"
-                    sh "docker logs --tail 100 gateway || true"
-                }
+            try {
+                sh "docker-compose -f ./docker-compose.yml -p ${env.DOCKER_PROJECT_NAME} down -v --remove-orphans"
+            } catch (Exception e) {
+                echo "⚠️ No había contenedores corriendo"
             }
+
+            sh "docker-compose -f ./docker-compose.yml -p ${env.DOCKER_PROJECT_NAME} up -d --build"
+
+            echo '⏳ Esperando 30 segundos para levantar contenedores...'
+            sleep(30)
+
+            sh "docker ps"
+            sh "docker logs --tail 100 gateway || true"
         }
     }
+}
+
 
     post {
         always {
