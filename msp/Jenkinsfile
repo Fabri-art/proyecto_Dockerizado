@@ -56,9 +56,9 @@ pipeline {
 
             for (svc in services) {
                 def path = "msp/${svc}"
-                def imageName = "${svc}:latest"
+                def imageName = "${svc.toLowerCase()}:latest"
 
-                echo "⚙️ Construyendo imagen local para ${svc}..."
+                echo "⚙️ Construyendo imagen local para ${svc} como ${imageName}..."
 
                 dir(path) {
                     sh 'mvn clean package -DskipTests'
@@ -68,6 +68,7 @@ pipeline {
         }
     }
 }
+
 
         stage('Clean Database Volume') {
             steps {
