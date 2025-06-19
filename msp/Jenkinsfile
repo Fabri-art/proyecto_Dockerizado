@@ -27,7 +27,7 @@ pipeline {
             steps {
                 script {
                     def services = SERVICES.split()
-                    withSonarQubeEnv("${SONARQUBE_INSTANCE}") {
+                    withSonarQubeEnv('sonarqube') {
                         for (svc in services) {
                             dir("msp/${svc}") {
                                 echo "📊 Analizando ${svc}..."
