@@ -8,8 +8,7 @@ pipeline {
     environment {
         DOCKER_PROJECT_NAME = 'msp'
         SONARQUBE_INSTANCE = 'sonarqube'
-        REGISTRY_URL = 'localhost:5000'
-        SERVICES = "config-server gateway MarketChino-master registry-server report-ms"
+        SERVICES = "config-server gateway marketchino-master registry-server report-ms"
         DB_NAME = "chinomarket"
         DB_USER = "chinomarketserver"
         DB_PASSWORD = "chinomarket2025"
@@ -50,60 +49,56 @@ pipeline {
         }
 
         stage('Build and Dockerize') {
-    steps {
-        script {
-            def services = env.SERVICES.split()
-
-            for (svc in services) {
-                def path = "msp/${svc}"
-                def imageName = "${svc.toLowerCase()}:latest"
-
-                echo "⚙️ Construyendo imagen local para ${svc} como ${imageName}..."
-
-                dir(path) {
-                    sh 'mvn clean package -DskipTests'
-                    sh "docker build -t ${imageName} ."
-                }
-            }
-        }
-    }
-}
-
-
-        stage('Clean Database Volume') {
             steps {
                 script {
-                    echo '🧹 Eliminando volumen PostgreSQL para reinicialización...'
-                    try {
-                        sh 'docker volume rm msp_postgres_data || true'
-                        echo '✅ Volumen eliminado correctamente'
-                    } catch (Exception e) {
-                        echo "⚠️ Volumen no existía o no se pudo eliminar, se continuará de todos modos"
+                    def services = env.SERVICES.split()
+
+                    for (svc in services) {
+                        def path = "msp/${svc}"
+                        def imageName = "${svc.toLowerCase()}:latest"
+
+                        echo "⚙️ Construyendo imagen local para ${svc}..."
+
+                        dir(path) {
+                            sh 'mvn clean package -DskipTests'
+                            sh "docker build -t ${imageName} ."
+                        }
                     }
                 }
             }
         }
 
-        stage('Deploy with Docker Compose') {
-    steps {
-        script {
-            echo '🚀 Levantando microservicios con Docker Compose...'
-
-            try {
-                sh "docker-compose -p ${env.DOCKER_PROJECT_NAME} down -v --remove-orphans"
-            } catch (Exception e) {
-                echo "⚠️ No había contenedores corriendo"
+        stage('Clean Database Volume') {
+            steps {
+                script {
+                    echo '🧹 Eliminando volumen PostgreSQL para reinicialización...'
+                    sh 'docker volume rm msp_postgres_data || true'
+                }
             }
+        }
 
-            sh "docker-compose -p ${env.DOCKER_PROJECT_NAME} up -d --build"
+        stage('Deploy with Docker Compose') {
+            steps {
+                script {
+                    echo '🚀 Levantando microservicios con Docker Compose...'
 
-            echo '⏳ Esperando 30s para levantar contenedores...'
-            sleep(30)
+                    try {
+                        sh "docker-compose -p ${env.DOCKER_PROJECT_NAME} down -v --remove-orphans"
+                    } catch (Exception e) {
+                        echo "⚠️ No había contenedores corriendo"
+                    }
 
-            sh "docker ps"
+                    sh "docker-compose -p ${env.DOCKER_PROJECT_NAME} up -d --build"
+
+                    echo '⏳ Esperando 30 segundos para levantar contenedores...'
+                    sleep(30)
+
+                    sh "docker ps"
+                    sh "docker logs --tail 100 gateway || true"
+                }
+            }
         }
     }
-}
 
     post {
         always {
