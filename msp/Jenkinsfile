@@ -51,10 +51,12 @@ pipeline {
         stage('Build and Dockerize') {
             steps {
                 script {
-                    def services = SERVICES.split()
+                    def services = env.SERVICES.split()
+                    def registry = env.REGISTRY_URL
+
                     for (svc in services) {
                         def path = "msp/${svc}"
-                        def imageName = "${REGISTRY_URL}/${svc}:latest"
+                        def imageName = "${registry}/${svc}:latest"
 
                         echo "⚙️ Construyendo y dockerizando ${svc}..."
 
@@ -75,13 +77,13 @@ pipeline {
                     script {
                         echo '🧹 Apagando contenedores antiguos...'
                         try {
-                            sh "docker-compose -p ${DOCKER_PROJECT_NAME} down -v --remove-orphans"
+                            sh "docker-compose -p ${env.DOCKER_PROJECT_NAME} down -v --remove-orphans"
                         } catch (Exception e) {
                             echo "⚠️ No hay contenedores antiguos, continuando..."
                         }
 
                         echo '🚀 Levantando microservicios...'
-                        sh "docker-compose -p ${DOCKER_PROJECT_NAME} up -d --build"
+                        sh "docker-compose -p ${env.DOCKER_PROJECT_NAME} up -d --build"
 
                         echo '⏳ Esperando a que todos arranquen...'
                         sleep(30)
