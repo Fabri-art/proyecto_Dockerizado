@@ -1,0 +1,39 @@
+server:
+  servlet:
+    context-path: /chinomarket-crud
+  port: 0
+
+spring:
+  application:
+    name: chinomarket-crud
+  profiles:
+    #prod     #profile in production
+    #default  #profile in dev
+    default: default
+  config:
+    import: 'optional:configserver:http://localhost:7777'
+    #import: 'optional:configserver:${CONFIG_SERVER_HOST}'
+  datasource:
+    hikari:
+      maximum-pool-size: '5'
+      connection-timeout: '20000'
+    username: chinomarketserver
+    password: chinomarket2025
+    url: jdbc:postgresql://localhost:5435/chinomarket
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+
+eureka:
+  instance:
+    hostname: localhost
+    prefer-ip-address: false
+    instance-id: "${spring.application.name}:${random.value}"
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER_URL:http://localhost:8761/eureka}

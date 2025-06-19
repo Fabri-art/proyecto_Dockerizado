@@ -1,0 +1,12 @@
+# Ignorar configuración externa
+/microservice-config/
+
+# Archivos comunes a ignorar
+.idea/
+.vscode/
+*.log
+*.class
+target/
+build/
+.DS_Store
+*.iml

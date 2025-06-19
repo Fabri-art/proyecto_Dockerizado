@@ -1,0 +1,108 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'MAVEN_HOME'
+    }
+
+    environment {
+        DOCKER_PROJECT_NAME = 'msp'
+        SONARQUBE_INSTANCE = 'SonarQube'
+        SERVICES = "config-server gateway MarketChino-master registry-server report-ms"
+        DB_NAME = "chinomarket"
+        DB_USER = "chinomarketserver"
+        DB_PASSWORD = "chinomarket2025"
+        REPO_URL = "https://github.com/Fabri-art/proyecto_Dockerizado.git"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                cleanWs()
+                checkout scm
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    def services = SERVICES.split()
+                    withSonarQubeEnv("${SONARQUBE_INSTANCE}") {
+                        for (svc in services) {
+                            dir("msp/${svc}") {
+                                echo "📊 Analizando ${svc}..."
+                                sh 'mvn clean verify sonar:sonar -DskipTests'
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    echo "✅ Esperando resultados del análisis..."
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Build and Dockerize') {
+            steps {
+                script {
+                    def services = SERVICES.split()
+                    for (svc in services) {
+                        def path = "msp/${svc}"
+                        def imageName = "${REGISTRY_URL}/${svc}:latest"
+
+                        echo "⚙️ Construyendo y dockerizando ${svc}..."
+
+                        dir(path) {
+                            sh 'mvn clean package -DskipTests'
+                        }
+
+                        sh "docker build -t ${imageName} ${path}"
+                        sh "docker push ${imageName}"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy with Docker Compose') {
+            steps {
+                dir('.') {
+                    script {
+                        echo '🧹 Apagando contenedores antiguos...'
+                        try {
+                            sh "docker-compose -p ${DOCKER_PROJECT_NAME} down -v --remove-orphans"
+                        } catch (Exception e) {
+                            echo "⚠️ No hay contenedores antiguos, continuando..."
+                        }
+
+                        echo '🚀 Levantando microservicios...'
+                        sh "docker-compose -p ${DOCKER_PROJECT_NAME} up -d --build"
+
+                        echo '⏳ Esperando a que todos arranquen...'
+                        sleep(30)
+
+                        echo '🧾 Mostrando logs de gateway:'
+                        sh "docker logs --tail 100 gateway"
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo '🏁 === FINAL DEL PIPELINE ==='
+        }
+        success {
+            echo '🎉 ✓ Microservicios desplegados correctamente'
+        }
+        failure {
+            echo '💥 ✗ El pipeline falló, revisar errores'
+        }
+    }
+}
