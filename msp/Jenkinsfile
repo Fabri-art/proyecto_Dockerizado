@@ -50,27 +50,24 @@ pipeline {
         }
 
         stage('Build and Dockerize') {
-            steps {
-                script {
-                    def services = env.SERVICES.split()
-                    def registry = env.REGISTRY_URL
+    steps {
+        script {
+            def services = env.SERVICES.split()
 
-                    for (svc in services) {
-                        def path = "msp/${svc}"
-                        def imageName = "${registry}/${svc}:latest"
+            for (svc in services) {
+                def path = "msp/${svc}"
+                def imageName = "${svc}:latest"
 
-                        echo "⚙️ Construyendo y dockerizando ${svc}..."
+                echo "⚙️ Construyendo imagen local para ${svc}..."
 
-                        dir(path) {
-                            sh 'mvn clean package -DskipTests'
-                        }
-
-                        sh "docker build -t ${imageName} ${path}"
-                        sh "docker push ${imageName}"
-                    }
+                dir(path) {
+                    sh 'mvn clean package -DskipTests'
+                    sh "docker build -t ${imageName} ."
                 }
             }
         }
+    }
+}
 
         stage('Clean Database Volume') {
             steps {
