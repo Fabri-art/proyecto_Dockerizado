@@ -29,7 +29,7 @@ pipeline {
                     def services = env.SERVICES.split()
                     withSonarQubeEnv(env.SONARQUBE_INSTANCE) {
                         for (svc in services) {
-                            dir("msp/${svc}") {
+                            dir("${svc}") {
                                 echo "📊 Analizando ${svc}..."
                                 sh 'mvn clean verify sonar:sonar -DskipTests'
                             }
@@ -54,12 +54,10 @@ pipeline {
                     def services = env.SERVICES.split()
 
                     for (svc in services) {
-                        def path = "msp/${svc}"
                         def imageName = "${svc.toLowerCase()}:latest"
-
                         echo "⚙️ Construyendo imagen local para ${svc}..."
 
-                        dir(path) {
+                        dir("${svc}") {
                             sh 'mvn clean package -DskipTests'
                             sh "docker build -t ${imageName} ."
                         }
@@ -78,28 +76,27 @@ pipeline {
         }
 
         stage('Deploy with Docker Compose') {
-    steps {
-        script {
-            echo '🚀 Levantando microservicios con Docker Compose...'
+            steps {
+                script {
+                    echo '🚀 Levantando microservicios con Docker Compose...'
 
-            try {
-                sh "docker-compose -f docker-compose.yml -p ${env.DOCKER_PROJECT_NAME} down -v --remove-orphans"
-            } catch (Exception e) {
-                echo "⚠️ No había contenedores corriendo"
+                    try {
+                        sh "docker-compose -f docker-compose.yml -p ${env.DOCKER_PROJECT_NAME} down -v --remove-orphans"
+                    } catch (Exception e) {
+                        echo "⚠️ No había contenedores corriendo"
+                    }
+
+                    sh "docker-compose -f docker-compose.yml -p ${env.DOCKER_PROJECT_NAME} up -d --build"
+
+                    echo '⏳ Esperando 30 segundos para levantar contenedores...'
+                    sleep(30)
+
+                    sh "docker ps"
+                    sh "docker logs --tail 100 gateway || true"
+                }
             }
-
-            sh "docker-compose -f docker-compose.yml -p ${env.DOCKER_PROJECT_NAME} up -d --build"
-
-            echo '⏳ Esperando 30 segundos para levantar contenedores...'
-            sleep(30)
-
-            sh "docker ps"
-            sh "docker logs --tail 100 gateway || true"
         }
     }
-}
-
-
 
     post {
         always {
