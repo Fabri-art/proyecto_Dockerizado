@@ -16,7 +16,7 @@ services:
       ports:
         - '5435:5432'
     registry-server:
-     image: localhost:5000/registry-server:latest
+     image: registry-server:latest
      container_name: registry-server
      ports:
       - "8761:8761"
@@ -24,7 +24,7 @@ services:
       - chino-net
 
     config-server:
-     image: localhost:5000/config-server:latest
+     image: config-server:latest
      container_name: config-server
      depends_on:
       - registry-server
@@ -36,7 +36,7 @@ services:
       - chino-net
 
     gateway:
-     image: localhost:5000/gateway:latest
+     image: gateway:latest
      container_name: gateway
      depends_on:
       - registry-server
@@ -50,7 +50,7 @@ services:
       - chino-net
 
     MarketChino-master:
-     image: localhost:5000/MarketChino-master:latest
+     image: marketchino-master:latest
      container_name: product-service
      depends_on:
       - registry-server
@@ -63,7 +63,7 @@ services:
       - chino-net
 
     report-ms:
-     image: localhost:5000/report-ms:latest
+     image: report-ms:latest
      container_name: report-service
      depends_on:
       - registry-server
