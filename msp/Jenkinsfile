@@ -29,7 +29,7 @@ pipeline {
                     def services = env.SERVICES.split()
                     withSonarQubeEnv(env.SONARQUBE_INSTANCE) {
                         for (svc in services) {
-                            dir("${svc}") {
+                            dir("msp/${svc}") {
                                 echo "📊 Analizando ${svc}..."
                                 sh 'mvn clean verify sonar:sonar -DskipTests'
                             }
@@ -54,6 +54,7 @@ pipeline {
                     def services = env.SERVICES.split()
 
                     for (svc in services) {
+                        def path = "msp/${svc}"
                         def imageName = "${svc.toLowerCase()}:latest"
                         echo "⚙️ Construyendo imagen local para ${svc}..."
 
