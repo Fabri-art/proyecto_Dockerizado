@@ -49,23 +49,23 @@ pipeline {
         }
 
         stage('Build and Dockerize') {
-            steps {
-                script {
-                    def services = env.SERVICES.split()
+    steps {
+        script {
+            def services = env.SERVICES.split()
 
-                    for (svc in services) {
-                        def path = "msp/${svc}"
-                        def imageName = "${svc.toLowerCase()}:latest"
-                        echo "⚙️ Construyendo imagen local para ${svc}..."
+            for (svc in services) {
+                def imageName = "${svc.toLowerCase()}:latest"
+                echo "⚙️ Construyendo imagen local para ${svc}..."
 
-                        dir("${svc}") {
-                            sh 'mvn clean package -DskipTests'
-                            sh "docker build -t ${imageName} ."
-                        }
-                    }
+                dir("msp/${svc}") {
+                    sh 'mvn clean package -DskipTests'
+                    sh "docker build -t ${imageName} ."
                 }
             }
         }
+    }
+}
+
 
         stage('Clean Database Volume') {
             steps {
