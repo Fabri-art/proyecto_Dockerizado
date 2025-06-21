@@ -2,77 +2,78 @@ version: '3.8'
 
 services:
 
-    db:
-      image: postgres:16.1
-      container_name: db-chinomarket
-      restart: always
-      volumes:
-        - ./sql/create_schema.sql:/docker-entrypoint-initdb.d/create_schema.sql
-        - ./sql/data.sql:/docker-entrypoint-initdb.d/data.sql
-      environment:
-        POSTGRES_DB: 'chinomarket'
-        POSTGRES_USER: 'chinomarketserver'
-        POSTGRES_PASSWORD: 'chinomarket2025'
-      ports:
-        - '5435:5432'
-    registry-server:
-     image: registry-server:latest
-     container_name: registry-server
-     ports:
+  db:
+    image: postgres:16.1
+    container_name: db-chinomarket
+    restart: always
+    volumes:
+      - ./sql/create_schema.sql:/docker-entrypoint-initdb.d/create_schema.sql
+      - ./sql/data.sql:/docker-entrypoint-initdb.d/data.sql
+    environment:
+      POSTGRES_DB: 'chinomarket'
+      POSTGRES_USER: 'chinomarketserver'
+      POSTGRES_PASSWORD: 'chinomarket2025'
+    ports:
+      - '5435:5432'
+
+  registry-server:
+    image: registry-server:latest
+    container_name: registry-server
+    ports:
       - "8761:8761"
-     networks:
+    networks:
       - chino-net
 
-    config-server:
-     image: config-server:latest
-     container_name: config-server
-     depends_on:
+  config-server:
+    image: config-server:latest
+    container_name: config-server
+    depends_on:
       - registry-server
-     environment:
+    environment:
       EUREKA_SERVER_URL: http://registry-server:8761/eureka
     ports:
       - "8888:8888"
-      networks:
+    networks:
       - chino-net
 
-    gateway:
-     image: gateway:latest
-     container_name: gateway
-     depends_on:
+  gateway:
+    image: gateway:latest
+    container_name: gateway
+    depends_on:
       - registry-server
       - config-server
-     environment:
+    environment:
       EUREKA_SERVER_URL: http://registry-server:8761/eureka
       CONFIG_SERVER_URL: http://config-server:8888
     ports:
       - "8080:8080"
-     networks:
+    networks:
       - chino-net
 
-    MarketChino-master:
-     image: marketchino-master:latest
-     container_name: product-service
-     depends_on:
+  marketchino-master:
+    image: marketchino-master:latest
+    container_name: product-service
+    depends_on:
       - registry-server
       - config-server
-     environment:
+    environment:
       EUREKA_SERVER_URL: http://registry-server:8761/eureka
     ports:
       - "8081:8081"
-     networks:
+    networks:
       - chino-net
 
-    report-ms:
-     image: report-ms:latest
-     container_name: report-service
-     depends_on:
+  report-ms:
+    image: report-ms:latest
+    container_name: report-service
+    depends_on:
       - registry-server
       - config-server
-     environment:
+    environment:
       EUREKA_SERVER_URL: http://registry-server:8761/eureka
     ports:
       - "8090:8090"
-     networks:
+    networks:
       - chino-net
 
 networks:
