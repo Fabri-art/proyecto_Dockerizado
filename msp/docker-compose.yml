@@ -30,7 +30,7 @@ services:
       - registry-server
      environment:
       EUREKA_SERVER_URL: http://registry-server:8761/eureka
-      ports:
+    ports:
       - "8888:8888"
       networks:
       - chino-net
@@ -44,7 +44,7 @@ services:
      environment:
       EUREKA_SERVER_URL: http://registry-server:8761/eureka
       CONFIG_SERVER_URL: http://config-server:8888
-     ports:
+    ports:
       - "8080:8080"
      networks:
       - chino-net
@@ -57,7 +57,7 @@ services:
       - config-server
      environment:
       EUREKA_SERVER_URL: http://registry-server:8761/eureka
-     ports:
+    ports:
       - "8081:8081"
      networks:
       - chino-net
@@ -70,7 +70,7 @@ services:
       - config-server
      environment:
       EUREKA_SERVER_URL: http://registry-server:8761/eureka
-     ports:
+    ports:
       - "8090:8090"
      networks:
       - chino-net
